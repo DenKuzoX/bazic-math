@@ -26,6 +26,24 @@ pub const Matrix4f = extern struct {
         }};
     }
 
+    test "row major init 2" {
+        const mat_arr = [4][4]f32{
+            .{ 0.0, 0.1, 0.2, 0.3 },
+            .{ 0.4, 0.5, 0.6, 0.7 },
+            .{ 0.8, 0.9, 1.0, 1.1 },
+            .{ 1.2, 1.3, 1.4, 1.5 },
+        };
+        const result = init(mat_arr);
+        const expected = Matrix4f{ .cols = .{
+            .{ 0.0, 0.4, 0.8, 1.2 },
+            .{ 0.1, 0.5, 0.9, 1.3 },
+            .{ 0.2, 0.6, 1.0, 1.4 },
+            .{ 0.3, 0.7, 1.1, 1.5 },
+        }};
+
+        try expectEqual(expected, result);
+    }
+
     pub fn initColumnMajor(mat: [4]Vec4f) Matrix4f {
         return Matrix4f{ .cols = mat};
     }
@@ -108,10 +126,40 @@ pub const Matrix4f = extern struct {
         );
     }
 
+    test "scaling" {
+        const mat = Matrix4f.identity;
+        const svec = Vec3f{ 2, 3, 4 };
+        const result = mat.scale(svec);
+        const expected = Matrix4f.init(.{
+            .{ 1*2, 0  , 0  , 0 },
+            .{ 0  , 1*3, 0  , 0 },
+            .{ 0  , 0  , 1*4, 0 },
+            .{ 0  , 0  , 0  , 1 },
+        });
+
+        const eps = 0.00001;
+        try Matrix4f.expectApproxEqAbs(expected, result, eps);
+    }
+
     pub fn translate(self: Matrix4f, pos: Vec3f) Matrix4f {
         return self.mul(
             translation(pos)
         );
+    }
+
+    test "translation" {
+        const mat = Matrix4f.identity;
+        const pos = Vec3f{ 2, 3, 4 };
+        const result = mat.translate(pos);
+        const expected = Matrix4f.init(.{
+            .{ 1, 0, 0, 2 },
+            .{ 0, 1, 0, 3 },
+            .{ 0, 0, 1, 4 },
+            .{ 0, 0, 0, 1 },
+        });
+
+        const eps = 0.00001;
+        try Matrix4f.expectApproxEqAbs(expected, result, eps);
     }
 
     pub fn rotate(self: Matrix4f, angle_radians: f32, axis: Vec3f) Matrix4f {
@@ -119,6 +167,52 @@ pub const Matrix4f = extern struct {
             rotationAxis(axis, angle_radians)
         );
     }
+
+    test "any axis rotations" {
+        {
+            const axis = Vec3f{ 0.0, 0.0, 1.0 };
+            const angle = std.math.pi / 2.0; // 90
+            const result = rotationAxis(axis, angle);
+            const expected = Matrix4f{ .cols = .{
+                .{  0, 1, 0, 0 },
+                .{ -1, 0, 0, 0 },
+                .{  0, 0, 1, 0 },
+                .{  0, 0, 0, 1 },
+            }};
+
+            const eps = 0.00001;
+            try Matrix4f.expectApproxEqAbs(expected, result, eps);
+        }
+        {
+            const axis = Vec3f{ 1.0, 0.0, 0.0 };
+            const angle = std.math.pi / 2.0; // 90
+            const result = rotationAxis(axis, angle);
+            const expected = rotationX(std.math.pi / 2.0);
+
+            const eps = 0.00001;
+            try Matrix4f.expectApproxEqAbs(expected, result, eps);
+        }
+        {
+            const axis = Vec3f{ 0.0, 1.0, 0.0 };
+            const angle = std.math.pi / 2.0; // 90
+            const result = rotationAxis(axis, angle);
+            const expected = rotationY(std.math.pi / 2.0);
+
+            const eps = 0.00001;
+            try Matrix4f.expectApproxEqAbs(expected, result, eps);
+        }
+        {
+            const axis = Vec3f{ 0.0, 0.0, 1.0 };
+            const angle = std.math.pi / 2.0; // 90
+            const result = rotationAxis(axis, angle);
+            const expected = rotationZ(std.math.pi / 2.0);
+
+            const eps = 0.00001;
+            try Matrix4f.expectApproxEqAbs(expected, result, eps);
+        }
+    }
+
+    // TODO add matrix X,Y,Z rotation test
 
     pub fn rotateX(self: Matrix4f, angle_radians: f32) Matrix4f {
         return self.mul(
@@ -155,6 +249,31 @@ pub const Matrix4f = extern struct {
         return result;
     }
 
+    test "matrix4f multiplication mat*mat" {
+        const a = Matrix4f{ .cols = .{
+            .{ 1, 0, 0, 0 },
+            .{ 0, 1, 0, 0 },
+            .{ 0, 0, 1, 0 },
+            .{ 0, 0, 0, 1 },
+        }};
+        const b = Matrix4f{ .cols = .{
+            .{ 2.5,  0, 0 , 0 },
+            .{ 0  , -3, 0 , 0 },
+            .{ 0  ,  0, 40, 0 },
+            .{ 0  ,  0, 0 , 1 },
+        }};
+        const result = mul(a, b);
+        const expected = Matrix4f{ .cols = .{
+            .{ 1 * 2.5, 0     , 0     , 0 },
+            .{ 0      , 1 * -3, 0     , 0 },
+            .{ 0      , 0     , 1 * 40, 0 },
+            .{ 0      , 0     , 0     , 1 },
+        }};
+
+        const eps = 0.00001;
+        try Matrix4f.expectApproxEqAbs(expected, result, eps);
+    }
+
     pub fn mulVec(mat: Matrix4f, vec: Vec4f) Vec4f {
         const t0 = mat.cols[0] * Vec.splat(Vec4f, vec[0]);
         const t1 = mat.cols[1] * Vec.splat(Vec4f, vec[1]);
@@ -163,8 +282,34 @@ pub const Matrix4f = extern struct {
         return t0 + t1 + t2 + t3;
     }
 
+    test "multiplication mat*vec4f" {
+        const mat = Matrix4f.identity;
+        const vec = Vec4f{ 1.5, 2, -3, 40 };
+        const result = mat.mulVec(vec);
+        const expected = Vec4f{
+            1 *  1.5 + 0 *  1.5 + 0 *  1.5 + 0 *  1.5,
+            0 *  2   + 1 *  2   + 0 *  2   + 0 *  2  ,
+            0 * -3   + 0 * -3   + 1 * -3   + 0 * -3  ,
+            0 *  40  + 0 *  40  + 0 *  40  + 1 *  40 ,
+        };
+        try expectEqual(expected, result);
+    }
+
     pub fn mulVec3(mat: Matrix4f, vec: Vec3f) Vec4f {
         return mulVec(mat, .{ vec[0], vec[1], vec[2], 1});
+    }
+
+    test "multiplication mat*vec3f" {
+        const mat = Matrix4f.identity;
+        const vec = Vec3f{ 1.5, 2, -3 };
+        const result = mat.mulVec3(vec);
+        const expected = Vec4f{
+            1 *  1.5 + 0 *  1.5 + 0 *  1.5 + 0 *  1.5,
+            0 *  2   + 1 *  2   + 0 *  2   + 0 *  2  ,
+            0 * -3   + 0 * -3   + 1 * -3   + 0 * -3  ,
+            0 *  1   + 0 *  1   + 0 *  1   + 1 *  1  ,
+        };
+        try expectEqual(expected, result);
     }
     
     pub fn transpose(mat: Matrix4f) Matrix4f {
@@ -176,6 +321,25 @@ pub const Matrix4f = extern struct {
         }};
     }
 
+    test "transpose" {
+        const mat = Matrix4f{ .cols = .{
+            .{ 1, 2, 3, 4 },
+            .{ 5, 1, 0, 0 },
+            .{ 6, 0, 1, 0 },
+            .{ 7, 0, 0, 1 },
+        }};
+        const result = mat.transpose();
+        const expected = Matrix4f{ .cols = .{
+            .{ 1, 5, 6, 7 },
+            .{ 2, 1, 0, 0 },
+            .{ 3, 0, 1, 0 },
+            .{ 4, 0, 0, 1 },
+        }};
+
+        const eps = 0.00001;
+        try Matrix4f.expectApproxEqAbs(expected, result, eps);
+    }
+
     pub fn asArray(mat: Matrix4f) [4][4]f32 {
         return .{
             .{ mat.cols[0][0], mat.cols[1][0],  mat.cols[2][0], mat.cols[3][0] },
@@ -183,6 +347,20 @@ pub const Matrix4f = extern struct {
             .{ mat.cols[0][2], mat.cols[1][2],  mat.cols[2][2], mat.cols[3][2] },
             .{ mat.cols[0][3], mat.cols[1][3],  mat.cols[2][3], mat.cols[3][3] },
         };
+    }
+
+    test "return as array" {
+        const arr_mat = [4][4]f32{
+            .{ 1, 2, 3, 4 },
+            .{ 5, 1, 0, 0 },
+            .{ 6, 0, 1, 0 },
+            .{ 7, 0, 0, 1 },
+        };
+        const mat = Matrix4f.init(arr_mat);
+        const result = mat.asArray();
+        const expected = arr_mat;
+
+        try expectEqual(expected, result);
     }
 
     fn expectApproxEqAbs(expected: Matrix4f, actual: Matrix4f, tolerance: comptime_float) !void {
@@ -265,169 +443,3 @@ pub fn orthographic(width: f32, height: f32) Matrix4f {
 
 // TODO add orthographic matrix test
 // test "orthographic matrix" {}
-
-test "row major init" {
-    const mat_arr = [4][4]f32{
-        .{ 0.0, 0.1, 0.2, 0.3 },
-        .{ 0.4, 0.5, 0.6, 0.7 },
-        .{ 0.8, 0.9, 1.0, 1.1 },
-        .{ 1.2, 1.3, 1.4, 1.5 },
-    };
-    const result = Matrix4f.init(mat_arr);
-    const expected = Matrix4f{ .cols = .{
-        .{ 0.0, 0.4, 0.8, 1.2 },
-        .{ 0.1, 0.5, 0.9, 1.3 },
-        .{ 0.2, 0.6, 1.0, 1.4 },
-        .{ 0.3, 0.7, 1.1, 1.5 },
-    }};
-
-    try expectEqual(expected, result);
-}
-
-test "scaling" {
-    const mat = Matrix4f.identity;
-    const svec = Vec3f{ 2, 3, 4 };
-    const result = mat.scale(svec);
-    const expected = Matrix4f.init(.{
-        .{ 1*2, 0  , 0  , 0 },
-        .{ 0  , 1*3, 0  , 0 },
-        .{ 0  , 0  , 1*4, 0 },
-        .{ 0  , 0  , 0  , 1 },
-    });
-
-    const eps = 0.00001;
-    try Matrix4f.expectApproxEqAbs(expected, result, eps);
-}
-
-test "translation" {
-    const mat = Matrix4f.identity;
-    const pos = Vec3f{ 2, 3, 4 };
-    const result = mat.translate(pos);
-    const expected = Matrix4f.init(.{
-        .{ 1, 0, 0, 2 },
-        .{ 0, 1, 0, 3 },
-        .{ 0, 0, 1, 4 },
-        .{ 0, 0, 0, 1 },
-    });
-
-    const eps = 0.00001;
-    try Matrix4f.expectApproxEqAbs(expected, result, eps);
-}
-
-test "any axis rotations" {
-    {
-        const axis = Vec3f{ 0.0, 0.0, 1.0 };
-        const angle = std.math.pi / 2.0; // 90
-        const result = Matrix4f.rotationAxis(axis, angle);
-        const expected = Matrix4f{ .cols = .{
-            .{  0, 1, 0, 0 },
-            .{ -1, 0, 0, 0 },
-            .{  0, 0, 1, 0 },
-            .{  0, 0, 0, 1 },
-        }};
-
-        const eps = 0.00001;
-        try Matrix4f.expectApproxEqAbs(expected, result, eps);
-    }
-    {
-        const axis = Vec3f{ 1.0, 0.0, 0.0 };
-        const angle = std.math.pi / 2.0; // 90
-        const result = Matrix4f.rotationAxis(axis, angle);
-        const expected = Matrix4f.rotationX(std.math.pi / 2.0);
-
-        const eps = 0.00001;
-        try Matrix4f.expectApproxEqAbs(expected, result, eps);
-    }
-    {
-        const axis = Vec3f{ 0.0, 1.0, 0.0 };
-        const angle = std.math.pi / 2.0; // 90
-        const result = Matrix4f.rotationAxis(axis, angle);
-        const expected = Matrix4f.rotationY(std.math.pi / 2.0);
-
-        const eps = 0.00001;
-        try Matrix4f.expectApproxEqAbs(expected, result, eps);
-    }
-    {
-        const axis = Vec3f{ 0.0, 0.0, 1.0 };
-        const angle = std.math.pi / 2.0; // 90
-        const result = Matrix4f.rotationAxis(axis, angle);
-        const expected = Matrix4f.rotationZ(std.math.pi / 2.0);
-
-        const eps = 0.00001;
-        try Matrix4f.expectApproxEqAbs(expected, result, eps);
-    }
-}
-
-// TODO add matrix X,Y,Z rotation test
-// test "matrix4f axis rotations"
-
-test "matrix4f multiplication mat*mat" {
-    const a = Matrix4f{ .cols = .{
-        .{ 1, 0, 0, 0 },
-        .{ 0, 1, 0, 0 },
-        .{ 0, 0, 1, 0 },
-        .{ 0, 0, 0, 1 },
-    }};
-    const b = Matrix4f{ .cols = .{
-        .{ 2.5,  0, 0 , 0 },
-        .{ 0  , -3, 0 , 0 },
-        .{ 0  ,  0, 40, 0 },
-        .{ 0  ,  0, 0 , 1 },
-    }};
-    const result = Matrix4f.mul(a, b);
-    const expected = Matrix4f{ .cols = .{
-        .{ 1 * 2.5, 0     , 0     , 0 },
-        .{ 0      , 1 * -3, 0     , 0 },
-        .{ 0      , 0     , 1 * 40, 0 },
-        .{ 0      , 0     , 0     , 1 },
-    }};
-
-    const eps = 0.00001;
-    try Matrix4f.expectApproxEqAbs(expected, result, eps);
-}
-
-test "multiplication mat*vec" {
-    const mat = Matrix4f.identity;
-    const vec = Vec4f{ 1.5, 2, -3, 40 };
-    const result = mat.mulVec(vec);
-    const expected = Vec4f{
-        1 *  1.5 + 0 *  1.5 + 0 *  1.5 + 0 *  1.5,
-        0 *  2   + 1 *  2   + 0 *  2   + 0 *  2  ,
-        0 * -3   + 0 * -3   + 1 * -3   + 0 * -3  ,
-        0 *  40  + 0 *  40  + 0 *  40  + 1 *  40 ,
-    };
-    try expectEqual(expected, result);
-}
-
-test "transpose" {
-    const mat = Matrix4f{ .cols = .{
-        .{ 1, 2, 3, 4 },
-        .{ 5, 1, 0, 0 },
-        .{ 6, 0, 1, 0 },
-        .{ 7, 0, 0, 1 },
-    }};
-    const result = mat.transpose();
-    const expected = Matrix4f{ .cols = .{
-        .{ 1, 5, 6, 7 },
-        .{ 2, 1, 0, 0 },
-        .{ 3, 0, 1, 0 },
-        .{ 4, 0, 0, 1 },
-    }};
-
-    const eps = 0.00001;
-    try Matrix4f.expectApproxEqAbs(expected, result, eps);
-}
-
-test "return as array" {
-    const arr_mat = [4][4]f32{
-        .{ 1, 2, 3, 4 },
-        .{ 5, 1, 0, 0 },
-        .{ 6, 0, 1, 0 },
-        .{ 7, 0, 0, 1 },
-    };
-    const mat = Matrix4f.init(arr_mat);
-    const result = mat.asArray();
-    const expected = arr_mat;
-
-    try expectEqual(expected, result);
-}
