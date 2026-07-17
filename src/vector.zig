@@ -434,7 +434,7 @@ test "clamp int" {
     try expectEqual(expected, result);
 }
 
-/// Calculates a 3D forward direction vector from pitch and yaw angles.
+/// Calculates a 3D forward direction vector from pitch and yaw angles(radians).
 pub fn forward(pitch: f32, yaw: f32) Vector3f {
     return normalize(Vector3f{
         @cos(pitch) * @sin(yaw),
