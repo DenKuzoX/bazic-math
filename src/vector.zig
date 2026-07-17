@@ -373,6 +373,32 @@ test "lengthSq 0 check" {
     try expectEqual(0, result);
 }
 
+// TODO research the @TypeOf(a).Child instead of @typeInfo(@TypeOf(a)).vector.child
+
+pub fn distance(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
+    return length(a - b);
+}
+
+test "distance" {
+    const a = Vector2f { 1.2, -3.4 };
+    const b = Vector2f { 5.6,  7.8 };
+    const result = distance(a, b);
+    const expected = @sqrt(dot(a - b, a - b));
+    try expectEqual(expected, result);
+}
+
+pub fn distanceSq(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
+    return lengthSq(a - b);
+}
+
+test "distanceSq" {
+    const a = Vector2f { 1.2, -3.4 };
+    const b = Vector2f { 5.6,  7.8 };
+    const result = distanceSq(a, b);
+    const expected = dot(a - b, a - b);
+    try expectEqual(expected, result);
+}
+
 /// Normalizes a vector into a unit vector (a vector with a length of 1.0).
 pub fn normalize(vec: anytype) @TypeOf(vec) {
     const len = length(vec);
