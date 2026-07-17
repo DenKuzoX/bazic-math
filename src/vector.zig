@@ -251,10 +251,17 @@ pub fn neg(vec: anytype) @TypeOf(vec) {
     return scale(vec, -1);
 }
 
-test "negation" {
-    const vec = Vector4f{ 0.0, 1.0, 2.0, 3.0 };
+test "negation float" {
+    const vec = Vector4f{ 0.0, 1.0, 2.0, -3.0 };
     const result = neg(vec);
-    const expected = Vector4f{ 0.0 * -1.0, 1.0 * -1.0, 2.0 * -1.0, 3.0 * -1.0 };
+    const expected = Vector4f{ 0.0 * -1.0, 1.0 * -1.0, 2.0 * -1.0, -3.0 * -1.0 };
+    try expectEqual(expected, result);
+}
+
+test "negation int" {
+    const vec = Vector2i{ -4.0, 567.0 };
+    const result = neg(vec);
+    const expected = Vector2i{ -4.0 * -1.0, 567.0 * -1.0 };
     try expectEqual(expected, result);
 }
 
