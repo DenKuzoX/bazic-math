@@ -23,10 +23,17 @@ pub fn arrayToVec(arr: anytype) @Vector(@typeInfo(@TypeOf(arr)).array.len, @type
     return vec;
 }
 
-test "array to vector" {
+test "array to vector float" {
     const arr = [_]f32{ 0.0, 1.2, -3.0 };
     const result = arrayToVec(arr);
     const expected = Vector3f{ 0.0, 1.2, -3.0 };
+    try expectEqual(expected, result);
+}
+
+test "array to vector int" {
+    const arr = [_]i32{ 4, -5 };
+    const result = arrayToVec(arr);
+    const expected = Vector2i{ 4, -5 };
     try expectEqual(expected, result);
 }
 
@@ -38,10 +45,17 @@ pub fn vecToArray(vec: anytype) [@typeInfo(@TypeOf(vec)).vector.len]@typeInfo(@T
     return arr;
 }
 
-test "vector to array" {
+test "vector to array float" {
     const vec = Vector2f{ 0.0, 2.5 };
     const result = vecToArray(vec);
     const expected = [2]f32{ 0.0, 2.5 };
+    try expectEqual(expected, result);
+}
+
+test "vector to array int" {
+    const vec = Vector4i{ 0, 1, 2, 3 };
+    const result = vecToArray(vec);
+    const expected = [4]i32{ 0, 1, 2, 3 };
     try expectEqual(expected, result);
 }
 
