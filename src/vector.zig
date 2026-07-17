@@ -367,11 +367,11 @@ pub fn lerp(a: anytype, b: @TypeOf(a), t: anytype) @TypeOf(a) {
 }
 
 test "lerp" {
-    const a: Vector2i = .{ 0, 1 };
-    const b: Vector2i = .{ 2, 3 };
-    const t: i32 = 4;
+    const a: Vector2f = .{ -1,  2 };
+    const b: Vector2f = .{  3, -4 };
+    const t: f32 = 0.5;
     const result = lerp(a, b, t);
-    const expected = a + (b - a) * Vector2i{ 4, 4 };
+    const expected = a + (b - a) * Vector2f{ 0.5, 0.5 };
     try expectEqual(expected, result);
 }
 
