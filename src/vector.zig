@@ -229,7 +229,7 @@ fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child 
 
         @compileError(
             "Type mismatch: cannot cast value of type '" ++ @typeName(ValueType)
-                ++ "' int value of type '" ++ @typeName(ChildType) ++ "'"
+                ++ "' into value of type '" ++ @typeName(ChildType) ++ "'"
         );
     };
 }
