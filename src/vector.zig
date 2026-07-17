@@ -306,7 +306,7 @@ pub fn cross3(a: anytype, b: @TypeOf(a)) @TypeOf(b) {
     };
 }
 
-test "cross" {
+test "cross3" {
     const a = Vector3f{ 0, 1, 2 };
     const b = Vector3f{ 3, 4, 5 };
     const result = cross3(a, b);
