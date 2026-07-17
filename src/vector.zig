@@ -393,7 +393,7 @@ test "normalize 0 check" {
 ///
 /// This function interpolates between vector `a` and vector `b` based on the scalar factor `t`.
 /// The formula used is: `a + (b - a) * t`.
-pub fn lerp(a: anytype, b: @TypeOf(a), t: anytype) @TypeOf(a) {
+pub fn lerp(a: anytype, b: @TypeOf(a), t: @typeInfo(@TypeOf(a)).vector.child) @TypeOf(a) {
     return a + (b - a) * @as(@TypeOf(a), @splat(t));
 }
 
