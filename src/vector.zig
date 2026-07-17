@@ -434,6 +434,56 @@ test "clamp int" {
     try expectEqual(expected, result);
 }
 
+/// Projects 'v' onto 'u'
+pub fn project(v: anytype, u: @TypeOf(v)) @TypeOf(v) {
+    const len = lengthSq(u);
+    if (len == 0.0) return splat(@TypeOf(v), 0);
+
+    const scalar = dot(v, u) / len;
+    return scale(u, scalar);
+}
+
+test "vector projection" {
+    const v = Vector3f{ 1.2, 3.0, -4.0 };
+    const u = Vector3f{ 5.0, 0.0,  0.0 };
+    const result = project(v, u);
+    const expected = scale(
+        Vector3f{ 5.0, 0.0,  0.0 },
+        dot(v, u) / lengthSq(u)
+    );
+    try expectEqual(expected, result);
+}
+
+/// Rejects 'v' from 'u' (perpendicular component)
+pub fn reject(v: anytype, u: @TypeOf(v)) @TypeOf(v) {
+    return v - project(v, u);
+}
+
+test "vector rejection" {
+    const v = Vector3f{ 1.2, 3.0, -4.0 };
+    const u = Vector3f{ 5.0, 0.0,  0.0 };
+    const result = reject(v, u);
+    const expected = v - scale(
+        Vector3f{ 5.0, 0.0,  0.0 },
+        dot(v, u) / lengthSq(u)
+    );
+    try expectEqual(expected, result);
+}
+
+/// Reflects 'v' across a surface normal 'n' (n must be normalized)
+pub fn reflect(v: anytype, n: @TypeOf(v)) @TypeOf(v) {
+    const scalar = 2.0 * dot(v, n);
+    return v - scale(n, scalar);
+}
+
+test "vector reflection" {
+    const v = Vector3f{ 1.2, 3.0, -4.0 };
+    const n = Vector3f{ 0.1, 0.2,  0.3 };
+    const result = reflect(v, n);
+    const expected = v - scale(n, 2.0 * dot(v, n));
+    try expectEqual(expected, result);
+}
+
 /// Calculates a 3D forward direction vector from pitch and yaw angles(radians).
 pub fn forward(pitch: f32, yaw: f32) Vector3f {
     return normalize(Vector3f{
