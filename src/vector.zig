@@ -300,6 +300,15 @@ test "vectors: dot" {
     try expectEqual(expected, result);
 }
 
+pub fn cross2(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
+    const VecType = @TypeOf(a);
+    if (@typeInfo(VecType).vector.len != 2) {
+        @compileError("incompatible vector: cross2 function support only vectors with len = 2");
+    }
+
+    return (a[0] * b[1]) - (a[1] * b[0]);
+}
+
 /// Computes the cross product of two 3-dimensional vectors.
 ///
 /// The resulting vector is strictly perpendicular (orthogonal) to both input vectors
