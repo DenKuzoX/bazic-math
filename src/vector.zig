@@ -14,7 +14,7 @@ pub const Vector4i = @Vector(4, i32);
 pub const Vector4f = @Vector(4, f32);
 pub const Vector4d = @Vector(4, f64);
 
-
+/// Converts an array `[len]T` to a vector `@Vector(len, T)` of the same length and element type
 pub fn arrayToVec(arr: anytype) @Vector(@typeInfo(@TypeOf(arr)).array.len, @typeInfo(@TypeOf(arr)).array.child) {
     const ArrTypeInfo = @typeInfo(@TypeOf(arr)).array;
     const ChildType = ArrTypeInfo.child;
@@ -37,6 +37,7 @@ test "array to vector int" {
     try expectEqual(expected, result);
 }
 
+/// Converts an vector `@Vector(len, T)` to a array `[len]T` of the same length and element type
 pub fn vecToArray(vec: anytype) [@typeInfo(@TypeOf(vec)).vector.len]@typeInfo(@TypeOf(vec)).vector.child {
     const VecTypeInfo = @typeInfo(@TypeOf(vec)).vector;
     const ChildType = VecTypeInfo.child;
@@ -110,6 +111,7 @@ pub const CompareOperation = enum {
     EqualOrLess,
 };
 
+/// Compares two vectors element-wise and reduces the boolean result into a single value.
 fn compareVectors(
     a: anytype,
     is: CompareOperation,
@@ -131,7 +133,6 @@ fn compareVectors(
 pub fn compareVec(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
     return compareVectors(a, is, b, .And);
 }
-
 
 test "all value comparison equal" {
     const a: Vector3f = .{  0.0, 1.2, -3.4 };
@@ -197,6 +198,7 @@ test "splat" {
     try expectEqual(expected, result);
 }
 
+/// Casts a scalar value to the element (child) type of a given vector
 fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child {
     const VecType = @TypeOf(vec);
     const ChildType = @typeInfo(VecType).vector.child;
@@ -262,6 +264,7 @@ test "scaling" {
     try expectEqual(exprected, result);
 }
 
+/// Negates all elements of a vector by multiplying them by -1.
 pub fn neg(vec: anytype) @TypeOf(vec) {
     return scale(vec, -1);
 }
@@ -280,6 +283,10 @@ test "negation int" {
     try expectEqual(expected, result);
 }
 
+/// Computes the dot product (scalar product) of two vectors.
+///
+/// This function performs an element-wise multiplication of vectors `a` and `b`,
+/// and then sums up all the resulting components into a single scalar value.
 pub fn dot(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     return @reduce(.Add, a * b);
 }
@@ -293,6 +300,10 @@ test "vectors: dot" {
     try expectEqual(expected, result);
 }
 
+/// Computes the cross product of two 3-dimensional vectors.
+///
+/// The resulting vector is strictly perpendicular (orthogonal) to both input vectors
+/// `a` and `b`, following the right-hand rule.
 pub fn cross3(a: anytype, b: @TypeOf(a)) @TypeOf(b) {
     const VecType = @TypeOf(a);
     if (@typeInfo(VecType).vector.len != 3) {
@@ -353,6 +364,7 @@ test "lengthSq 0 check" {
     try expectEqual(0, result);
 }
 
+/// Normalizes a vector into a unit vector (a vector with a length of 1.0).
 pub fn normalize(vec: anytype) @TypeOf(vec) {
     const len = length(vec);
     if (len == 0) return vec;
@@ -377,6 +389,10 @@ test "normalize 0 check" {
     try expectEqual(expected, result);
 }
 
+/// Performs linear interpolation (lerp) between two vectors.
+///
+/// This function interpolates between vector `a` and vector `b` based on the scalar factor `t`.
+/// The formula used is: `a + (b - a) * t`.
 pub fn lerp(a: anytype, b: @TypeOf(a), t: anytype) @TypeOf(a) {
     return a + (b - a) * @as(@TypeOf(a), @splat(t));
 }
@@ -390,6 +406,10 @@ test "lerp" {
     try expectEqual(expected, result);
 }
 
+/// Clamps each element of a vector between the corresponding elements of a minimum and maximum vector.
+///
+/// This function constrains the components of `vec` element-wise. If an element is less than
+/// the minimum, it is set to `min`. If it is greater than the maximum, it is set to `max`.
 pub fn clamp(vec: anytype, min: @TypeOf(vec), max: @TypeOf(vec)) @TypeOf(vec) {
     var result = @max(min, vec);
     result = @min(max, result);
@@ -414,6 +434,7 @@ test "clamp int" {
     try expectEqual(expected, result);
 }
 
+/// Calculates a 3D forward direction vector from pitch and yaw angles.
 pub fn forward(pitch: f32, yaw: f32) Vector3f {
     return normalize(Vector3f{
         @cos(pitch) * @sin(yaw),
@@ -438,6 +459,7 @@ test "forward" {
     try std.testing.expectApproxEqAbs(expected[2], result[2], eps);
 }
 
+/// Calculates a 3D forward direction vector projected onto the horizontal (X-Z) plane.
 pub fn forwardHorizontal(pitch: f32, yaw: f32) Vector3f {
     return normalize(Vector3f{
         @cos(pitch) * @sin(yaw),
