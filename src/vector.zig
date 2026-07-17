@@ -381,12 +381,21 @@ pub fn clamp(vec: anytype, min: @TypeOf(vec), max: @TypeOf(vec)) @TypeOf(vec) {
     return result;
 }
 
-test "clamp" {
+test "clamp float" {
     const vec = Vector4f{ 0.0, 1.0, 5.6, -3.0 };
     const min = Vector4f{ 0.0, -1.0, -2.0, 0.0 };
     const max = Vector4f{ 13.0, 100.0, 5.0, 532.0};
     const result = clamp(vec, min, max);
     const expected = Vector4f{ 0.0, 1.0, 5.0, 0.0 };
+    try expectEqual(expected, result);
+}
+
+test "clamp int" {
+    const vec = Vector2i{ 5, -3 };
+    const min = Vector2i{ -2, 0 };
+    const max = Vector2i{ 5, 532};
+    const result = clamp(vec, min, max);
+    const expected = Vector2i{ 5, 0 };
     try expectEqual(expected, result);
 }
 
