@@ -311,7 +311,7 @@ pub const Matrix4f = extern struct {
         };
         try expectEqual(expected, result);
     }
-    
+
     pub fn transpose(mat: Matrix4f) Matrix4f {
         return Matrix4f{ .cols = .{
             .{ mat.cols[0][0], mat.cols[1][0], mat.cols[2][0], mat.cols[3][0] },
@@ -397,11 +397,16 @@ test "lookAt" {
     const world_up = Vec3f{ 0, 1, 0 };
 
     const result = lookAt(eye, center, world_up);
+
+    const forward = Vec.normalize(eye - center);
+    const right = Vec.normalize(Vec.cross3(world_up, forward));
+    const up_true = Vec.cross3(forward, right);
+
     const expected = Matrix4f.init(.{
-        .{ 1, 0, 0, 0 },
-        .{ 0, 1, 0, 0 },
-        .{ 0, 0, 1, -3 },
-        .{ 0, 0, 0, 1 },
+        .{ right[0]  , right[1]  , right[2]  , -Vec.dot(right, eye) },
+        .{ up_true[0], up_true[1], up_true[2], -Vec.dot(up_true, eye) },
+        .{ forward[0], forward[1], forward[2], -Vec.dot(forward, eye) },
+        .{ 0         , 0         , 0         , 1 },
     });
 
     try expectEqual(expected, result);
@@ -421,14 +426,11 @@ pub fn perspective(fov: f32, asp_ratio: f32, near: f32, far: f32) Matrix4f {
 // TODO add perspective matrix test
 // test "perspective matrix" {}
 
-pub fn orthographic(width: f32, height: f32) Matrix4f {
-    const left: f32 = 0;
-    const right: f32 = width;
-    const bottom: f32 = 0;
-    const top: f32 = height;
-    const near: f32 = -1;
-    const far: f32 = 1;
+pub fn orthographic2D(width: f32, height: f32) Matrix4f {
+    return orthographic(0, width, height, 0, -1, 1);
+}
 
+pub fn orthographic(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) Matrix4f {
     const rml = right - left;
     const tmb = top - bottom;
     const fmn = far - near;
