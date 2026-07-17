@@ -164,7 +164,7 @@ pub const Matrix4f = extern struct {
     }
 
     pub fn mulVec3(mat: Matrix4f, vec: Vec3f) Vec4f {
-        return mulVec(.{ vec[0], vec[1], vec[2], 1}, mat);
+        return mulVec(mat, .{ vec[0], vec[1], vec[2], 1});
     }
     
     pub fn transpose(mat: Matrix4f) Matrix4f {
