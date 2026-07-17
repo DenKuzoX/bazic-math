@@ -2,6 +2,10 @@ const std = @import("std");
 const math = std.math;
 const expectEqual = std.testing.expectEqual;
 
+// TODO research the @TypeOf(a).Child instead of @typeInfo(@TypeOf(a)).vector.child
+
+// TODO add Nan, inf, -inf checks
+
 pub const Vector2i = @Vector(2, i32);
 pub const Vector2f = @Vector(2, f32);
 pub const Vector2d = @Vector(2, f64);
@@ -372,8 +376,6 @@ test "lengthSq 0 check" {
     const result = lengthSq(vec);
     try expectEqual(0, result);
 }
-
-// TODO research the @TypeOf(a).Child instead of @typeInfo(@TypeOf(a)).vector.child
 
 pub fn distance(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     return length(a - b);
