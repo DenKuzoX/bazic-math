@@ -264,8 +264,8 @@ test "scaling" {
     const vec = Vector3f{ 0, 1, 2 };
     const value: i32 = 3;
     const result = scale(vec, value);
-    const exprected = Vector3f{ 0, 3, 6};
-    try expectEqual(exprected, result);
+    const expected = Vector3f{ 0, 3, 6 };
+    try expectEqual(expected, result);
 }
 
 /// Negates all elements of a vector by multiplying them by -1.
