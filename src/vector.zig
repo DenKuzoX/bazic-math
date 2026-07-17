@@ -176,6 +176,12 @@ pub fn splat(T: type, value: anytype) T {
     return @splat(value);
 }
 
+test "splat" {
+    const result = splat(Vector3d, 3.0);
+    const expected = Vector3d{ 3.0, 3.0, 3.0 };
+    try expectEqual(expected, result);
+}
+
 fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child {
     const VecType = @TypeOf(vec);
     const ChildType = @typeInfo(VecType).vector.child;
@@ -207,6 +213,26 @@ fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child 
     };
 }
 
+test "cast value comtime_int -> f32" {
+    const value: comptime_int = 1;
+    const vec = Vector2f{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(1.0, result);
+}
+
+test "cast value i32 -> f64" {
+    const value: i32 = -2;
+    const vec = Vector2d{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(-2.0, result);
+}
+
+test "cast value f64 -> f32" {
+    const value: f64 = 3.4;
+    const vec = Vector2f{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(3.4, result);
+}
 
 pub fn scale(vec: anytype, value: anytype) @TypeOf(vec) {
     const casted_value = castValue(vec, value);
