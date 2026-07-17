@@ -118,9 +118,6 @@ pub fn compareVec(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
     return compareVectors(a, is, b, .And);
 }
 
-pub fn compareVecAny(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
-    return compareVectors(a, is, b, .Or);
-}
 
 test "all value comparison equal" {
     const a: Vector3f = .{  0.0, 1.2, -3.4 };
@@ -148,6 +145,10 @@ test "all value comparison, any check" {
     const b: Vector3f = .{ 0, 1.5, 0 };
     const result = compareVec(a, .Equal, b);
     try expectEqual(false, result);
+}
+
+pub fn compareVecAny(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
+    return compareVectors(a, is, b, .Or);
 }
 
 test "any value comparison equal" {
