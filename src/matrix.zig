@@ -231,7 +231,7 @@ pub const Matrix4f = extern struct {
             const bz = Vec.splat(Vec4f, b_col[2]);
             const bw = Vec.splat(Vec4f, b_col[3]);
 
-            col.* = a.cols[0] * bx + a.cols[1] * by + a.cols[2] * bz + a.cols[3] * bw;
+            col.* = bx * a.cols[0] + by * a.cols[1] + bz * a.cols[2] + bw * a.cols[3];
         }
 
         return result;
