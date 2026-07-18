@@ -108,6 +108,10 @@ pub fn vec4ToVec3NoDiv(vec: anytype) @Vector(3, @typeInfo(@TypeOf(vec)).vector.c
     return @Vector(3, T){ vec[0], vec[1], vec[2] };
 }
 
+pub fn perspectiveDivide(vec: Vector4f) Vector3f {
+    return vec4ToVec3(vec);
+}
+
 test "vector4 to vector3 without division" {
     const vec = Vector4f{ 0.0, 4.0, -5.0, 2.0 };
     const result = vec4ToVec3NoDiv(vec);
