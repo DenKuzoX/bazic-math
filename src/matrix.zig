@@ -423,8 +423,38 @@ pub fn perspective(fov: f32, asp_ratio: f32, near: f32, far: f32) Matrix4f {
     });
 }
 
-// TODO add perspective matrix test
-// test "perspective matrix" {}
+test "perspective near/far mapping" {
+    const fov = std.math.pi / 2.0;  // 90
+    const aspect = 1.0;
+    const near: f32 = 0.1;
+    const far: f32 = 100.0;
+
+    const projection = perspective(fov, aspect, near, far);
+    const eps = 0.0001;
+
+    // Create a 4D homogeneous point located right in the center of the near plane.
+    // `-near` because the camera looks at the negative Z axis.
+    const point_near = Vec4f{ 0, 0, -near, 1 };
+
+    // Graphics pipeline transformation:
+    // 1. projection.mulVec(point_near) -> Transforms to Clip Space
+    // 2. Vec.perspectiveDivide(...) -> Performs [X/W, Y/W, Z/W] to get NDC Space
+    const ndc_near = Vec.perspectiveDivide(projection.mulVec(point_near));
+
+    try expectApproxEqAbs( 0, ndc_near[0], eps); // X remains 0.0 (centered horizontally)
+    try expectApproxEqAbs( 0, ndc_near[1], eps); // Y remains 0.0 (centered vertically)
+    try expectApproxEqAbs(-1, ndc_near[2], eps); // Z maps precisely to -1.0 (clipping minimum)
+
+    // Create a 4D homogeneous point located right in the center of the far plane.
+    const point_far = Vec4f{ 0, 0, -far, 1 };
+
+    // Apply the same projection and perspective division pipeline
+    const ndc_far = Vec.perspectiveDivide(projection.mulVec(point_far));
+
+    try expectApproxEqAbs(0, ndc_far[0], eps); // X remains 0.0 (centered horizontally)
+    try expectApproxEqAbs(0, ndc_far[1], eps); // Y remains 0.0 (centered vertically)
+    try expectApproxEqAbs(1, ndc_far[2], eps); // Z maps precisely to 1.0 (clipping maximum)
+}
 
 pub fn orthographic2D(width: f32, height: f32) Matrix4f {
     return orthographic(0, width, height, 0, -1, 1);
