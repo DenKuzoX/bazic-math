@@ -488,11 +488,11 @@ test "perspective: matrix elements match formula" {
     const result = perspective(fov, aspect, near, far);
 
     const f = 1.0 / @tan(fov * 0.5);
-    const zmf = near - far;
+    const nmf = near - far;
     const expected = Matrix4f.init(.{
         .{ aspect * f, 0,                  0,                      0 },
         .{ 0,          f,                  0,                      0 },
-        .{ 0,          0, (near + far) / zmf, (2 * far * near) / zmf },
+        .{ 0,          0, (near + far) / nmf, (2 * far * near) / nmf },
         .{ 0,          0,                 -1,                      0 },
     });
 
@@ -500,6 +500,7 @@ test "perspective: matrix elements match formula" {
     try Matrix4f.expectApproxEqAbs(expected, result, eps);
 }
 
+// TODO make a rewrite/refactor
 test "perspective: near/far mapping" {
     const fov = std.math.pi / 2.0;  // 90
     const aspect = 1.0;
