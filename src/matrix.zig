@@ -206,8 +206,6 @@ pub const Matrix4f = extern struct {
         }
     }
 
-    // TODO add matrix X,Y,Z rotation test
-
     pub fn rotateX(self: Matrix4f, angle_radians: f32) Matrix4f {
         return self.mul(rotationX(angle_radians));
     }
@@ -231,10 +229,51 @@ pub const Matrix4f = extern struct {
             const bz = Vec.splat(Vec4f, b_col[2]);
             const bw = Vec.splat(Vec4f, b_col[3]);
 
-            col.* = bx * a.cols[0] + by * a.cols[1] + bz * a.cols[2] + bw * a.cols[3];
+            col.* = a.cols[0] * bx + a.cols[1] * by + a.cols[2] * bz + a.cols[3] * bw;
         }
 
         return result;
+    }
+
+    test "multiplication mat*mat calculation" {
+        const a = Matrix4f{ .cols = .{
+            .{ 1.0,  0  , 0  , 0   },
+            .{ 0  , -2.0, 0  , 0   },
+            .{ 0  ,  0  , 3.8, 0   },
+            .{ 5.0,  6.0, 7.0, 1   },
+        }};
+        const b = Matrix4f{ .cols = .{
+            .{  2.5,  0  , 0   , 0 },
+            .{  0  , -3.0, 0   , 0 },
+            .{  0  ,  0  , 40.0, 0 },
+            .{ -2.0,  4.0, 13.0, 1 },
+        }};
+        const result = mul(a, b);
+
+        const expected = Matrix4f{ .cols = .{
+            a.cols[0] * Vec.splat(Vec4f, b.cols[0][0])
+                + a.cols[1] * Vec.splat(Vec4f, b.cols[0][1])
+                + a.cols[2] * Vec.splat(Vec4f, b.cols[0][2])
+                + a.cols[3] * Vec.splat(Vec4f, b.cols[0][3])
+            ,
+            a.cols[0] * Vec.splat(Vec4f, b.cols[1][0])
+                + a.cols[1] * Vec.splat(Vec4f, b.cols[1][1])
+                + a.cols[2] * Vec.splat(Vec4f, b.cols[1][2])
+                + a.cols[3] * Vec.splat(Vec4f, b.cols[1][3])
+            ,
+            a.cols[0] * Vec.splat(Vec4f, b.cols[2][0])
+                + a.cols[1] * Vec.splat(Vec4f, b.cols[2][1])
+                + a.cols[2] * Vec.splat(Vec4f, b.cols[2][2])
+                + a.cols[3] * Vec.splat(Vec4f, b.cols[2][3])
+            ,
+            a.cols[0] * Vec.splat(Vec4f, b.cols[3][0])
+                + a.cols[1] * Vec.splat(Vec4f, b.cols[3][1])
+                + a.cols[2] * Vec.splat(Vec4f, b.cols[3][2])
+                + a.cols[3] * Vec.splat(Vec4f, b.cols[3][3])
+            ,
+        }};
+
+        try expectEqual(result, expected);
     }
 
     test "matrix4f multiplication mat*mat" {
