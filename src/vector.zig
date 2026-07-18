@@ -78,6 +78,14 @@ test "vector3 to vector4" {
     try expectEqual(expected, result);
 }
 
+// TODO add zero check
+// Does not include guard logic for when `vec[3] == 0`. Dividing by zero will result
+// in `NaN` or inf values for floating-point vectors.
+/// Converts a 4D homogeneous vector to a 3D spatial vector by performing perspective division.
+///
+/// This function divides the spatial components (X, Y, Z) by the homogeneous coordinate (W/`vec[3]`).
+/// It is commonly used in 3D graphics pipelines to project 4D clip-space coordinates
+/// into 3D normalized device coordinates (NDC).
 pub fn vec4ToVec3(vec: anytype) @Vector(3, @typeInfo(@TypeOf(vec)).vector.child) {
     const T = @typeInfo(@TypeOf(vec)).vector.child;
     const vec3 = @Vector(3, T){
