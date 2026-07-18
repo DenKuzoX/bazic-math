@@ -87,7 +87,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
-    fn rotationX(angle_radians: f32) Matrix4f {
+    pub fn rotationX(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
         return Matrix4f.init(.{
@@ -98,7 +98,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
-    fn rotationY(angle_radians: f32) Matrix4f {
+    pub fn rotationY(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
         return Matrix4f.init(.{
@@ -109,7 +109,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
-    fn rotationZ(angle_radians: f32) Matrix4f {
+    pub fn rotationZ(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
         return Matrix4f.init(.{
@@ -121,9 +121,7 @@ pub const Matrix4f = extern struct {
     }
 
     pub fn scale(self: Matrix4f, vec: Vec3f) Matrix4f {
-        return self.mul(
-            scaling(vec)
-        );
+        return self.mul(scaling(vec));
     }
 
     test "scaling" {
@@ -142,9 +140,7 @@ pub const Matrix4f = extern struct {
     }
 
     pub fn translate(self: Matrix4f, pos: Vec3f) Matrix4f {
-        return self.mul(
-            translation(pos)
-        );
+        return self.mul(translation(pos));
     }
 
     test "translation" {
@@ -163,9 +159,7 @@ pub const Matrix4f = extern struct {
     }
 
     pub fn rotate(self: Matrix4f, angle_radians: f32, axis: Vec3f) Matrix4f {
-        return self.mul(
-            rotationAxis(axis, angle_radians)
-        );
+        return self.mul(rotationAxis(axis, angle_radians));
     }
 
     test "any axis rotations" {
@@ -215,21 +209,15 @@ pub const Matrix4f = extern struct {
     // TODO add matrix X,Y,Z rotation test
 
     pub fn rotateX(self: Matrix4f, angle_radians: f32) Matrix4f {
-        return self.mul(
-            rotationX(angle_radians)
-        );
+        return self.mul(rotationX(angle_radians));
     }
 
     pub fn rotateY(self: Matrix4f, angle_radians: f32) Matrix4f {
-        return self.mul(
-            rotationY(angle_radians)
-        );
+        return self.mul(rotationY(angle_radians));
     }
 
     pub fn rotateZ(self: Matrix4f, angle_radians: f32) Matrix4f {
-        return self.mul(
-            rotationZ(angle_radians)
-        );
+        return self.mul(rotationZ(angle_radians));
     }
 
     pub fn mul(a: Matrix4f, b: Matrix4f) Matrix4f {
