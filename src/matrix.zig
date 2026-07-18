@@ -423,7 +423,28 @@ pub fn perspective(fov: f32, asp_ratio: f32, near: f32, far: f32) Matrix4f {
     });
 }
 
-test "perspective near/far mapping" {
+test "perspective: matrix elements match formula" {
+    const fov = std.math.pi / 2.0; // 90
+    const aspect: f32 = 16.0 / 9.0;
+    const near: f32 = 0.1;
+    const far: f32 = 100.0;
+
+    const result = perspective(fov, aspect, near, far);
+
+    const f = 1.0 / @tan(fov * 0.5);
+    const zmf = near - far;
+    const expected = Matrix4f.init(.{
+        .{ aspect * f, 0,                  0,                      0 },
+        .{ 0,          f,                  0,                      0 },
+        .{ 0,          0, (near + far) / zmf, (2 * far * near) / zmf },
+        .{ 0,          0,                 -1,                      0 },
+    });
+
+    const eps = 0.0001;
+    try Matrix4f.expectApproxEqAbs(expected, result, eps);
+}
+
+test "perspective: near/far mapping" {
     const fov = std.math.pi / 2.0;  // 90
     const aspect = 1.0;
     const near: f32 = 0.1;
