@@ -374,6 +374,35 @@ pub const Matrix4f = extern struct {
     }
 };
 
+test "model matrix: scale then rotate then translate" {
+    // Setup: build model = T * Rz * S
+    // Methods chain right-to-left: .translate().rotateZ().scale()
+    // means model = translate(rotateZ(scale(v))) when applied as model * v
+    const pos = Vec3f{ 10, 20, 30 };
+    const rotation_angle = std.math.pi / 2.0; // 90
+    const scale_factor: f32 = 2;
+
+    const model = Matrix4f.identity
+        .translate(pos)
+        .rotateZ(rotation_angle)
+        .scale(Vec.splat(Vec3f, scale_factor));
+
+    // Apply to local vertex
+    // local = (1, 0, 0): unit vector along model's +X axis
+    const local = Vec4f{ 1, 0, 0, 1 };
+    const world = model.mulVec(local);
+
+    // S * (1,0,0) = (2,0,0)
+    // Rz * (2,0,0) = (0,2,0)      [90° CCW: (x,y) -> (-y,x)]
+    // T * (0,2,0) = (10,22,30)
+    const expected = Vec4f{ 10, 22, 30, 1 };
+
+    const eps = 0.0001;
+    try expectApproxEqAbs(expected[0], world[0], eps);
+    try expectApproxEqAbs(expected[1], world[1], eps);
+    try expectApproxEqAbs(expected[2], world[2], eps);
+}
+
 pub fn lookAt(eye: Vec3f, center: Vec3f, up: Vec3f) Matrix4f {
     const forward = Vec.normalize(eye - center);
     const right = Vec.normalize(Vec.cross3(up, forward));
