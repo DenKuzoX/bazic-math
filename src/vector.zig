@@ -64,6 +64,9 @@ test "vector to array int" {
     try expectEqual(expected, result);
 }
 
+/// Converts an 3D vector into 4D vector where last element `vec4[3] = w`.
+///
+/// The `w` value is cast to the same type as vector elements via `castValue`.
 pub fn vec3ToVec4(vec: anytype, w: anytype) @Vector(4, @typeInfo(@TypeOf(vec)).vector.child) {
     const T = @typeInfo(@TypeOf(vec)).vector.child;
     const casted_value = castValue(vec, w);
@@ -83,7 +86,7 @@ test "vector3 to vector4" {
 // in `NaN` or inf values for floating-point vectors.
 /// Converts a 4D homogeneous vector to a 3D spatial vector by performing perspective division.
 ///
-/// This function divides the spatial components (X, Y, Z) by the homogeneous coordinate (W/`vec[3]`).
+/// This function divides the spatial components (X, Y, Z) by the homogeneous coordinate (W or`vec[3]`).
 /// It is commonly used in 3D graphics pipelines to project 4D clip-space coordinates
 /// into 3D normalized device coordinates (NDC).
 pub fn vec4ToVec3(vec: anytype) @Vector(3, @typeInfo(@TypeOf(vec)).vector.child) {
@@ -96,6 +99,14 @@ pub fn vec4ToVec3(vec: anytype) @Vector(3, @typeInfo(@TypeOf(vec)).vector.child)
     return vec3;
 }
 
+/// Alias for `vec4ToVec3`.
+///
+/// Named after the graphics pipeline operation: perspective division
+/// transforms clip-space coordinates to normalized device coordinates (NDC).
+pub fn perspectiveDivide(vec: Vector4f) Vector3f {
+    return vec4ToVec3(vec);
+}
+
 test "vector4 to vector3" {
     const vec = Vector4f{ 0.0, 4.0, -5.0, 2.0 };
     const result = vec4ToVec3(vec);
@@ -103,13 +114,10 @@ test "vector4 to vector3" {
     try expectEqual(expected, result);
 }
 
+/// Converts an 4D vector into 3D vector through removing last element of vec4
 pub fn vec4ToVec3NoDiv(vec: anytype) @Vector(3, @typeInfo(@TypeOf(vec)).vector.child) {
     const T = @typeInfo(@TypeOf(vec)).vector.child;
     return @Vector(3, T){ vec[0], vec[1], vec[2] };
-}
-
-pub fn perspectiveDivide(vec: Vector4f) Vector3f {
-    return vec4ToVec3(vec);
 }
 
 test "vector4 to vector3 without division" {
@@ -316,6 +324,7 @@ test "vectors: dot" {
     try expectEqual(expected, result);
 }
 
+/// Computes the cross product of two 2-dimensional vectors.
 pub fn cross2(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     const VecType = @TypeOf(a);
     if (@typeInfo(VecType).vector.len != 2) {
@@ -326,9 +335,6 @@ pub fn cross2(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
 }
 
 /// Computes the cross product of two 3-dimensional vectors.
-///
-/// The resulting vector is strictly perpendicular (orthogonal) to both input vectors
-/// `a` and `b`, following the right-hand rule.
 pub fn cross3(a: anytype, b: @TypeOf(a)) @TypeOf(b) {
     const VecType = @TypeOf(a);
     if (@typeInfo(VecType).vector.len != 3) {
@@ -355,6 +361,7 @@ test "cross3" {
     try expectEqual(expected, result);
 }
 
+/// Computes the magnitude (length) of a vector.
 pub fn length(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
     return @sqrt(dot(vec, vec));
 }
@@ -372,6 +379,7 @@ test "length 0 check" {
     try expectEqual(0, result);
 }
 
+/// Computes the squared magnitude (squared length) of a vector.
 pub fn lengthSq(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
     return dot(vec, vec);
 }
@@ -389,6 +397,7 @@ test "lengthSq 0 check" {
     try expectEqual(0, result);
 }
 
+/// Computes the straight-line (Euclidean) distance between two spatial points.
 pub fn distance(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     return length(a - b);
 }
@@ -401,6 +410,7 @@ test "distance" {
     try expectEqual(expected, result);
 }
 
+/// Computes the squared Euclidean distance between two spatial points.
 pub fn distanceSq(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     return lengthSq(a - b);
 }
