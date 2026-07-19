@@ -276,7 +276,7 @@ pub const Matrix4f = extern struct {
         try expectEqual(result, expected);
     }
 
-    test "matrix4f multiplication mat*mat" {
+    test "multiplication mat*mat" {
         const a = Matrix4f{ .cols = .{
             .{ 1, 0, 0, 0 },
             .{ 0, 1, 0, 0 },
