@@ -21,7 +21,6 @@ pub const Matrix4f = extern struct {
     /// Creates a matrix from a row-major `[4][4]f32` array, converting to column-major storage internally.
     pub fn init(mat: [4][4]f32) Matrix4f {
         return .{.cols = .{
-            // row major -> col major
             Vec4f{ mat[0][0], mat[1][0], mat[2][0], mat[3][0]},
             Vec4f{ mat[0][1], mat[1][1], mat[2][1], mat[3][1]},
             Vec4f{ mat[0][2], mat[1][2], mat[2][2], mat[3][2]},
