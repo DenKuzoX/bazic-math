@@ -6,6 +6,8 @@ const Vec = @import("vector.zig");
 const Vec4f = Vec.Vector4f;
 const Vec3f = Vec.Vector3f;
 
+/// A 4×4 column-major matrix using `extern` layout.
+/// Stores 4 columns as `Vec4f` vectors. Default is zero-filled.
 pub const Matrix4f = extern struct {
     cols: [4]Vec4f = [_]Vec4f{ @splat(0) } ** 4,
 
@@ -16,6 +18,7 @@ pub const Matrix4f = extern struct {
         Vec4f{ 0, 0, 0, 1 },
     }};
 
+    /// Creates a matrix from a row-major `[4][4]f32` array, converting to column-major storage internally.
     pub fn init(mat: [4][4]f32) Matrix4f {
         return .{.cols = .{
             // row major -> col major
@@ -44,10 +47,12 @@ pub const Matrix4f = extern struct {
         try expectEqual(expected, result);
     }
 
+    /// Creates a matrix directly from 4 column vectors. No transposition is performed.
     pub fn initColumnMajor(mat: [4]Vec4f) Matrix4f {
         return Matrix4f{ .cols = mat};
     }
 
+    /// Returns a scaling matrix with `vec` components on the diagonal.
     fn scaling(vec: Vec3f) Matrix4f {
         const x = vec[0];
         const y = vec[1];
@@ -60,6 +65,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Returns a translation matrix that moves points by `pos`.
     fn translation(pos: Vec3f) Matrix4f {
         return Matrix4f.init(.{
             .{ 1, 0, 0, pos[0] },
@@ -69,6 +75,8 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Returns a rotation matrix around an arbitrary normalized axis by `angle_radians`.
+    /// Uses Rodrigues' rotation formula.
     fn rotationAxis(axis: Vec3f, angle_radians: f32) Matrix4f {
         const axs = Vec.normalize(axis);
         const x = axs[0];
@@ -87,6 +95,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Returns a rotation matrix around the X axis by `angle_radians`.
     pub fn rotationX(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
@@ -98,6 +107,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Returns a rotation matrix around the Y axis by `angle_radians`.
     pub fn rotationY(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
@@ -109,6 +119,7 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Returns a rotation matrix around the Z axis by `angle_radians`.
     pub fn rotationZ(angle_radians: f32) Matrix4f {
         const cos = @cos(angle_radians);
         const sin = @sin(angle_radians);
@@ -120,6 +131,8 @@ pub const Matrix4f = extern struct {
         });
     }
 
+    /// Post-multiplies `self` by a scaling matrix built from `vec`.
+    /// Returns a new matrix: `self * Scaling(vec)`.
     pub fn scale(self: Matrix4f, vec: Vec3f) Matrix4f {
         return self.mul(scaling(vec));
     }
@@ -139,6 +152,8 @@ pub const Matrix4f = extern struct {
         try Matrix4f.expectApproxEqAbs(expected, result, eps);
     }
 
+    /// Post-multiplies `self` by a translation matrix built from `pos`.
+    /// Returns a new matrix: `self * translation(pos)`.
     pub fn translate(self: Matrix4f, pos: Vec3f) Matrix4f {
         return self.mul(translation(pos));
     }
@@ -158,6 +173,8 @@ pub const Matrix4f = extern struct {
         try Matrix4f.expectApproxEqAbs(expected, result, eps);
     }
 
+    /// Post-multiplies `self` by a rotation matrix around `axis` by `angle_radians`.
+    /// Returns a new matrix: `self * rotationAxis(axis, angle)`.
     pub fn rotate(self: Matrix4f, angle_radians: f32, axis: Vec3f) Matrix4f {
         return self.mul(rotationAxis(axis, angle_radians));
     }
@@ -206,18 +223,23 @@ pub const Matrix4f = extern struct {
         }
     }
 
+    /// Post-multiplies `self` by an X-axis rotation matrix.
     pub fn rotateX(self: Matrix4f, angle_radians: f32) Matrix4f {
         return self.mul(rotationX(angle_radians));
     }
 
+    /// Post-multiplies `self` by a Y-axis rotation matrix.
     pub fn rotateY(self: Matrix4f, angle_radians: f32) Matrix4f {
         return self.mul(rotationY(angle_radians));
     }
 
+    /// Post-multiplies `self` by a Z-axis rotation matrix.
     pub fn rotateZ(self: Matrix4f, angle_radians: f32) Matrix4f {
         return self.mul(rotationZ(angle_radians));
     }
 
+    /// Matrix * Matrix multiplication: `a * b`. Returns a new matrix.
+    /// Operates in column-major order using SIMD splat and multiply-add.
     pub fn mul(a: Matrix4f, b: Matrix4f) Matrix4f {
         var result = Matrix4f{};
 
@@ -301,6 +323,7 @@ pub const Matrix4f = extern struct {
         try Matrix4f.expectApproxEqAbs(expected, result, eps);
     }
 
+    /// Multiplies a 4D vector by the matrix: `mat * vec`. Returns the transformed vector.
     pub fn mulVec(mat: Matrix4f, vec: Vec4f) Vec4f {
         const t0 = mat.cols[0] * Vec.splat(Vec4f, vec[0]);
         const t1 = mat.cols[1] * Vec.splat(Vec4f, vec[1]);
@@ -322,6 +345,8 @@ pub const Matrix4f = extern struct {
         try expectEqual(expected, result);
     }
 
+    /// Multiplies a 3D vector by the matrix, treating it as homogeneous `(vec, 1)`.
+    /// Returns a 4D vector.
     pub fn mulVec3(mat: Matrix4f, vec: Vec3f) Vec4f {
         return mulVec(mat, .{ vec[0], vec[1], vec[2], 1});
     }
@@ -339,6 +364,7 @@ pub const Matrix4f = extern struct {
         try expectEqual(expected, result);
     }
 
+    /// Returns the transpose of the matrix (rows become columns).
     pub fn transpose(mat: Matrix4f) Matrix4f {
         return Matrix4f{ .cols = .{
             .{ mat.cols[0][0], mat.cols[1][0], mat.cols[2][0], mat.cols[3][0] },
@@ -367,6 +393,7 @@ pub const Matrix4f = extern struct {
         try Matrix4f.expectApproxEqAbs(expected, result, eps);
     }
 
+    /// Converts the matrix to a row-major `[4][4]f32` array.
     pub fn asArray(mat: Matrix4f) [4][4]f32 {
         return .{
             .{ mat.cols[0][0], mat.cols[1][0],  mat.cols[2][0], mat.cols[3][0] },
@@ -390,6 +417,8 @@ pub const Matrix4f = extern struct {
         try expectEqual(expected, result);
     }
 
+    /// Tests two matrices for approximate equality within `tolerance`.
+    /// On mismatch, prints a detailed comparison of column values.
     fn expectApproxEqAbs(expected: Matrix4f, actual: Matrix4f, tolerance: comptime_float) !void {
         for (expected.asArray(), actual.asArray()) |e_col, a_col| {
             for (e_col, a_col) |e_value, a_value| {
@@ -430,6 +459,8 @@ test "model matrix: scale then rotate then translate" {
     try expectApproxEqAbs(expected[2], world[2], eps);
 }
 
+/// Builds a view matrix for a camera at `eye` looking at `center` with `up` as the world up vector.
+/// Returns a right-handed look-at matrix.
 pub fn lookAt(eye: Vec3f, center: Vec3f, up: Vec3f) Matrix4f {
     const forward = Vec.normalize(eye - center);
     const right = Vec.normalize(Vec.cross3(up, forward));
@@ -468,6 +499,10 @@ test "lookAt" {
     try expectEqual(expected, result);
 }
 
+/// Builds a perspective projection matrix.
+/// `fov` — vertical field of view in radians.
+/// `asp_ratio` — aspect ratio (width / height).
+/// `near` / `far` — clipping plane distances (positive values).
 pub fn perspective(fov: f32, asp_ratio: f32, near: f32, far: f32) Matrix4f {
     const f = 1 / @tan(fov * 0.5);
     const zmf = near - far;
@@ -534,10 +569,7 @@ test "perspective: near/far mapping" {
     try expectApproxEqAbs(1, ndc_far[2], eps); // Z maps precisely to 1.0 (clipping maximum)
 }
 
-pub fn orthographic2D(width: f32, height: f32) Matrix4f {
-    return orthographic(0, width, height, 0, -1, 1);
-}
-
+/// Builds a general orthographic projection matrix from view volume bounds.
 pub fn orthographic(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) Matrix4f {
     const rml = right - left;
     const tmb = top - bottom;
@@ -549,6 +581,12 @@ pub fn orthographic(left: f32, right: f32, bottom: f32, top: f32, near: f32, far
         .{ 0        , 0        , -2 / fmn , -(far + near) / fmn   },
         .{ 0        , 0        ,  0       , 1                     },
     });
+}
+
+/// Builds a 2D orthographic projection for screen-space rendering.
+/// Origin is top-left, Z range is [-1, 1].
+pub fn orthographic2D(width: f32, height: f32) Matrix4f {
+    return orthographic(0, width, height, 0, -1, 1);
 }
 
 // TODO add orthographic matrix test
