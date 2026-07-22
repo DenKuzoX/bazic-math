@@ -1,10 +1,9 @@
+// TODO add Nan, inf, -inf checks
 const std = @import("std");
 const math = std.math;
 const expectEqual = std.testing.expectEqual;
 
-// TODO research the @TypeOf(a).Child instead of @typeInfo(@TypeOf(a)).vector.child
-
-// TODO add Nan, inf, -inf checks
+// Types
 
 pub const Vector2i = @Vector(2, i32);
 pub const Vector2f = @Vector(2, f32);
@@ -18,6 +17,9 @@ pub const Vector4i = @Vector(4, i32);
 pub const Vector4f = @Vector(4, f32);
 pub const Vector4d = @Vector(4, f64);
 
+
+// Constructors
+
 /// Returns a vector filled with zeros.
 pub fn zero(T: type) @Vector(@typeInfo(T).vector.len, @typeInfo(T).vector.child) {
     return @splat(0);
@@ -28,6 +30,72 @@ test "filled with zero vector" {
     const expected = Vector3f{ 0, 0, 0 };
     try expectEqual(expected, result);
 }
+
+pub fn splat(T: type, value: anytype) T {
+    return @splat(value);
+}
+
+test "splat" {
+    const result = splat(Vector3d, 3.0);
+    const expected = Vector3d{ 3.0, 3.0, 3.0 };
+    try expectEqual(expected, result);
+}
+
+/// Casts a scalar value to the element (child) type of a given vector
+fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child {
+    const VecType = @TypeOf(vec);
+    const ChildType = @typeInfo(VecType).vector.child;
+    const ValueType = @TypeOf(value);
+
+    return casted_value: {
+        if (ValueType == ChildType) break :casted_value value;
+
+        if (ValueType == comptime_int or ValueType == comptime_float) {
+            break :casted_value @as(ChildType, value);
+        }
+
+        if (@typeInfo(ChildType) == .float and @typeInfo(ValueType) == .int) {
+            break :casted_value @as(ChildType, @floatFromInt(value));
+        }
+
+        if (@typeInfo(ChildType) == .int and @typeInfo(ValueType) == .int) {
+            break :casted_value @as(ChildType, @intCast(value));
+        }
+
+        if (@typeInfo(ChildType) == .float and @typeInfo(ValueType) == .float) {
+            break :casted_value @as(ChildType, @floatCast(value));
+        }
+
+        @compileError(
+            "Type mismatch: cannot cast value of type '" ++ @typeName(ValueType)
+                ++ "' into value of type '" ++ @typeName(ChildType) ++ "'"
+        );
+    };
+}
+
+test "cast value comtime_int -> f32" {
+    const value: comptime_int = 1;
+    const vec = Vector2f{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(1.0, result);
+}
+
+test "cast value i32 -> f64" {
+    const value: i32 = -2;
+    const vec = Vector2d{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(-2.0, result);
+}
+
+test "cast value f64 -> f32" {
+    const value: f64 = 3.4;
+    const vec = Vector2f{ 0, 0 };
+    const result = castValue(vec, value);
+    try expectEqual(3.4, result);
+}
+
+
+// Convertors
 
 /// Converts an array `[len]T` to a vector `@Vector(len, T)` of the same length and element type
 pub fn arrayToVec(arr: anytype) @Vector(@typeInfo(@TypeOf(arr)).array.len, @typeInfo(@TypeOf(arr)).array.child) {
@@ -138,6 +206,74 @@ test "vector4 to vector3 without division" {
     try expectEqual(expected, result);
 }
 
+
+// Properties
+
+/// Computes the magnitude (length) of a vector.
+pub fn length(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
+    return @sqrt(dot(vec, vec));
+}
+
+test "length" {
+    const vec = Vector4d{ 0, 1, 2, 3 };
+    const result = length(vec);
+    const expected: f64 = @sqrt(0*0 + 1*1 + 2*2 + 3*3);
+    try expectEqual(expected, result);
+}
+
+test "length 0 check" {
+    const vec = Vector2d{ -0.0, 0.0 };
+    const result = length(vec);
+    try expectEqual(0, result);
+}
+
+/// Computes the squared magnitude (squared length) of a vector.
+pub fn lengthSq(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
+    return dot(vec, vec);
+}
+
+test "lengthSq" {
+    const vec = Vector3i{ 0, 1, 2 };
+    const result = lengthSq(vec);
+    const expected: i32 = 0*0 + 1*1 + 2*2;
+    try expectEqual(expected, result);
+}
+
+test "lengthSq 0 check" {
+    const vec = Vector2i{ 0, 0 };
+    const result = lengthSq(vec);
+    try expectEqual(0, result);
+}
+
+/// Computes the straight-line (Euclidean) distance between two spatial points.
+pub fn distance(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
+    return length(a - b);
+}
+
+test "distance" {
+    const a = Vector2f { 1.2, -3.4 };
+    const b = Vector2f { 5.6,  7.8 };
+    const result = distance(a, b);
+    const expected = @sqrt(dot(a - b, a - b));
+    try expectEqual(expected, result);
+}
+
+/// Computes the squared Euclidean distance between two spatial points.
+pub fn distanceSq(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
+    return lengthSq(a - b);
+}
+
+test "distanceSq" {
+    const a = Vector2f { 1.2, -3.4 };
+    const b = Vector2f { 5.6,  7.8 };
+    const result = distanceSq(a, b);
+    const expected = dot(a - b, a - b);
+    try expectEqual(expected, result);
+}
+
+
+// Comparisons
+
 pub const CompareOperation = enum {
     Equal,
     Greater,
@@ -165,35 +301,35 @@ fn compareVectors(
     return @reduce(op, result);
 }
 
-pub fn compareVec(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
+pub fn compareVecAll(a: anytype, is: CompareOperation, b: @TypeOf(a)) bool {
     return compareVectors(a, is, b, .And);
 }
 
 test "all value comparison equal" {
     const a: Vector3f = .{  0.0, 1.2, -3.4 };
     const b: Vector3f = .{ -0.0, 1.2, -3.4 };
-    const result = compareVec(a, .Equal, b);
+    const result = compareVecAll(a, .Equal, b);
     try expectEqual(true, result);
 }
 
 test "all value comparison greater" {
     const a: Vector4f = .{ 4, 5.6, -0.7, 80 };
     const b: Vector4f = .{ 0, 1.5, -2  , 30};
-    const result = compareVec(a, .Greater, b);
+    const result = compareVecAll(a, .Greater, b);
     try expectEqual(true, result);
 }
 
 test "all value comparison less" {
     const a: Vector2i = .{ 1, -2 };
     const b: Vector2i = .{ 3, 40 };
-    const result = compareVec(a, .Less, b);
+    const result = compareVecAll(a, .Less, b);
     try expectEqual(true, result);
 }
 
 test "all value comparison, any check" {
     const a: Vector3f = .{ 0, 5.0, 0 };
     const b: Vector3f = .{ 0, 1.5, 0 };
-    const result = compareVec(a, .Equal, b);
+    const result = compareVecAll(a, .Equal, b);
     try expectEqual(false, result);
 }
 
@@ -223,68 +359,7 @@ test "any value comparison Less" {
 }
 
 
-pub fn splat(T: type, value: anytype) T {
-    return @splat(value);
-}
-
-test "splat" {
-    const result = splat(Vector3d, 3.0);
-    const expected = Vector3d{ 3.0, 3.0, 3.0 };
-    try expectEqual(expected, result);
-}
-
-/// Casts a scalar value to the element (child) type of a given vector
-fn castValue(vec: anytype, value: anytype) @typeInfo(@TypeOf(vec)).vector.child {
-    const VecType = @TypeOf(vec);
-    const ChildType = @typeInfo(VecType).vector.child;
-    const ValueType = @TypeOf(value);
-
-    return casted_value: {
-        if (ValueType == ChildType) break :casted_value value;
-
-        if (ValueType == comptime_int or ValueType == comptime_float) {
-            break :casted_value @as(ChildType, value);
-        }
-
-        if (@typeInfo(ChildType) == .float and @typeInfo(ValueType) == .int) {
-            break :casted_value @as(ChildType, @floatFromInt(value));
-        }
-
-        if (@typeInfo(ChildType) == .int and @typeInfo(ValueType) == .int) {
-            break :casted_value @as(ChildType, @intCast(value));
-        }
-
-        if (@typeInfo(ChildType) == .float and @typeInfo(ValueType) == .float) {
-            break :casted_value @as(ChildType, @floatCast(value));
-        }
-
-        @compileError(
-            "Type mismatch: cannot cast value of type '" ++ @typeName(ValueType)
-                ++ "' into value of type '" ++ @typeName(ChildType) ++ "'"
-        );
-    };
-}
-
-test "cast value comtime_int -> f32" {
-    const value: comptime_int = 1;
-    const vec = Vector2f{ 0, 0 };
-    const result = castValue(vec, value);
-    try expectEqual(1.0, result);
-}
-
-test "cast value i32 -> f64" {
-    const value: i32 = -2;
-    const vec = Vector2d{ 0, 0 };
-    const result = castValue(vec, value);
-    try expectEqual(-2.0, result);
-}
-
-test "cast value f64 -> f32" {
-    const value: f64 = 3.4;
-    const vec = Vector2f{ 0, 0 };
-    const result = castValue(vec, value);
-    try expectEqual(3.4, result);
-}
+// Core
 
 pub fn scale(vec: anytype, value: anytype) @TypeOf(vec) {
     const casted_value = castValue(vec, value);
@@ -369,68 +444,6 @@ test "cross3" {
         0 * 4 - 1 * 3,
     };
 
-    try expectEqual(expected, result);
-}
-
-/// Computes the magnitude (length) of a vector.
-pub fn length(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
-    return @sqrt(dot(vec, vec));
-}
-
-test "length" {
-    const vec = Vector4d{ 0, 1, 2, 3 };
-    const result = length(vec);
-    const expected: f64 = @sqrt(0*0 + 1*1 + 2*2 + 3*3);
-    try expectEqual(expected, result);
-}
-
-test "length 0 check" {
-    const vec = Vector2d{ -0.0, 0.0 };
-    const result = length(vec);
-    try expectEqual(0, result);
-}
-
-/// Computes the squared magnitude (squared length) of a vector.
-pub fn lengthSq(vec: anytype) @typeInfo(@TypeOf(vec)).vector.child {
-    return dot(vec, vec);
-}
-
-test "lengthSq" {
-    const vec = Vector3i{ 0, 1, 2 };
-    const result = lengthSq(vec);
-    const expected: i32 = 0*0 + 1*1 + 2*2;
-    try expectEqual(expected, result);
-}
-
-test "lengthSq 0 check" {
-    const vec = Vector2i{ 0, 0 };
-    const result = lengthSq(vec);
-    try expectEqual(0, result);
-}
-
-/// Computes the straight-line (Euclidean) distance between two spatial points.
-pub fn distance(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
-    return length(a - b);
-}
-
-test "distance" {
-    const a = Vector2f { 1.2, -3.4 };
-    const b = Vector2f { 5.6,  7.8 };
-    const result = distance(a, b);
-    const expected = @sqrt(dot(a - b, a - b));
-    try expectEqual(expected, result);
-}
-
-/// Computes the squared Euclidean distance between two spatial points.
-pub fn distanceSq(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
-    return lengthSq(a - b);
-}
-
-test "distanceSq" {
-    const a = Vector2f { 1.2, -3.4 };
-    const b = Vector2f { 5.6,  7.8 };
-    const result = distanceSq(a, b);
-    const expected = dot(a - b, a - b);
     try expectEqual(expected, result);
 }
 
@@ -553,6 +566,9 @@ test "vector reflection" {
     const expected = v - scale(n, 2.0 * dot(v, n));
     try expectEqual(expected, result);
 }
+
+
+// Other
 
 /// Calculates a 3D forward direction vector from pitch and yaw angles(radians).
 pub fn forward(pitch: f32, yaw: f32) Vector3f {
