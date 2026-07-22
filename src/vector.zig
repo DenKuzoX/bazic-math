@@ -18,6 +18,17 @@ pub const Vector4i = @Vector(4, i32);
 pub const Vector4f = @Vector(4, f32);
 pub const Vector4d = @Vector(4, f64);
 
+/// Returns a vector filled with zeros.
+pub fn zero(T: type) @Vector(@typeInfo(T).vector.len, @typeInfo(T).vector.child) {
+    return @splat(0);
+}
+
+test "filled with zero vector" {
+    const result = zero(Vector3f);
+    const expected = Vector3f{ 0, 0, 0 };
+    try expectEqual(expected, result);
+}
+
 /// Converts an array `[len]T` to a vector `@Vector(len, T)` of the same length and element type
 pub fn arrayToVec(arr: anytype) @Vector(@typeInfo(@TypeOf(arr)).array.len, @typeInfo(@TypeOf(arr)).array.child) {
     const ArrTypeInfo = @typeInfo(@TypeOf(arr)).array;
