@@ -312,9 +312,9 @@ test "negation float" {
 }
 
 test "negation int" {
-    const vec = Vector2i{ -4.0, 567.0 };
+    const vec = Vector2i{ -4, 567 };
     const result = neg(vec);
-    const expected = Vector2i{ -4.0 * -1.0, 567.0 * -1.0 };
+    const expected = Vector2i{ -4 * -1, 567 * -1 };
     try expectEqual(expected, result);
 }
 
