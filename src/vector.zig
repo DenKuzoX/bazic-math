@@ -17,19 +17,7 @@ pub const Vector4i = @Vector(4, i32);
 pub const Vector4f = @Vector(4, f32);
 pub const Vector4d = @Vector(4, f64);
 
-
 // Constructors
-
-/// Returns a vector filled with zeros.
-pub fn zero(T: type) @Vector(@typeInfo(T).vector.len, @typeInfo(T).vector.child) {
-    return @splat(0);
-}
-
-test "filled with zero vector" {
-    const result = zero(Vector3f);
-    const expected = Vector3f{ 0, 0, 0 };
-    try expectEqual(expected, result);
-}
 
 pub fn splat(T: type, value: anytype) T {
     return @splat(value);
@@ -399,7 +387,7 @@ pub fn dot(a: anytype, b: @TypeOf(a)) @typeInfo(@TypeOf(a)).vector.child {
     return @reduce(.Add, a * b);
 }
 
-test "vectors: dot" {
+test "dot" {
     const a = Vector2f{ 2, 3 };
     const b = Vector2f{ 4, 5 };
     const result = dot(a, b);
@@ -472,8 +460,7 @@ test "normalize 0 check" {
 
 /// Performs linear interpolation (lerp) between two vectors.
 ///
-/// This function interpolates between vector `a` and vector `b` based on the scalar factor `t`.
-/// The formula used is: `a + (b - a) * t`.
+/// This function interpolates between vector `a` and vector `b` based on the scalar factor `t`
 pub fn lerp(a: anytype, b: @TypeOf(a), t: @typeInfo(@TypeOf(a)).vector.child) @TypeOf(a) {
     return a + (b - a) * @as(@TypeOf(a), @splat(t));
 }
@@ -524,7 +511,7 @@ pub fn project(v: anytype, u: @TypeOf(v)) @TypeOf(v) {
     return scale(u, scalar);
 }
 
-test "vector projection" {
+test "projection" {
     const v = Vector3f{ 1.2, 3.0, -4.0 };
     const u = Vector3f{ 5.0, 0.0,  0.0 };
     const result = project(v, u);
@@ -540,7 +527,7 @@ pub fn reject(v: anytype, u: @TypeOf(v)) @TypeOf(v) {
     return v - project(v, u);
 }
 
-test "vector rejection" {
+test "rejection" {
     const v = Vector3f{ 1.2, 3.0, -4.0 };
     const u = Vector3f{ 5.0, 0.0,  0.0 };
     const result = reject(v, u);
@@ -557,7 +544,7 @@ pub fn reflect(v: anytype, n: @TypeOf(v)) @TypeOf(v) {
     return v - scale(n, scalar);
 }
 
-test "vector reflection" {
+test "reflection" {
     const v = Vector3f{ 1.2, 3.0, -4.0 };
     const n = Vector3f{ 0.1, 0.2,  0.3 };
     const result = reflect(v, n);
