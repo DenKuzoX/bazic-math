@@ -12,23 +12,23 @@ pub const Matrix4f = extern struct {
     cols: [4]Vec4f = [_]Vec4f{ @splat(0) } ** 4,
 
     pub const identity: Matrix4f = .{ .cols = .{
-        Vec4f{ 1, 0, 0, 0 },
-        Vec4f{ 0, 1, 0, 0 },
-        Vec4f{ 0, 0, 1, 0 },
-        Vec4f{ 0, 0, 0, 1 },
+        .{ 1, 0, 0, 0 },
+        .{ 0, 1, 0, 0 },
+        .{ 0, 0, 1, 0 },
+        .{ 0, 0, 0, 1 },
     }};
 
     /// Creates a matrix from a row-major `[4][4]f32` array, converting to column-major storage internally.
     pub fn init(mat: [4][4]f32) Matrix4f {
         return .{.cols = .{
-            Vec4f{ mat[0][0], mat[1][0], mat[2][0], mat[3][0]},
-            Vec4f{ mat[0][1], mat[1][1], mat[2][1], mat[3][1]},
-            Vec4f{ mat[0][2], mat[1][2], mat[2][2], mat[3][2]},
-            Vec4f{ mat[0][3], mat[1][3], mat[2][3], mat[3][3]},
+            .{ mat[0][0], mat[1][0], mat[2][0], mat[3][0] },
+            .{ mat[0][1], mat[1][1], mat[2][1], mat[3][1] },
+            .{ mat[0][2], mat[1][2], mat[2][2], mat[3][2] },
+            .{ mat[0][3], mat[1][3], mat[2][3], mat[3][3] },
         }};
     }
 
-    test "row major init 2" {
+    test "row major init" {
         const mat_arr = [4][4]f32{
             .{ 0.0, 0.1, 0.2, 0.3 },
             .{ 0.4, 0.5, 0.6, 0.7 },
@@ -46,13 +46,36 @@ pub const Matrix4f = extern struct {
         try expectEqual(expected, result);
     }
 
-    /// Creates a matrix directly from 4 column vectors. No transposition is performed.
-    pub fn initColumnMajor(mat: [4]Vec4f) Matrix4f {
-        return Matrix4f{ .cols = mat};
+    /// Creates a matrix from a colum-major `[4][4]f32` array. No transposition is performed.
+    pub fn initColumnMajor(mat: [4][4]f32) Matrix4f {
+        return Matrix4f{ .cols = .{
+            .{ mat[0][0], mat[0][1], mat[0][2], mat[0][3] },
+            .{ mat[1][0], mat[1][1], mat[1][2], mat[1][3] },
+            .{ mat[2][0], mat[2][1], mat[2][2], mat[2][3] },
+            .{ mat[3][0], mat[3][1], mat[3][2], mat[3][3] },
+        }};
+    }
+
+    test "column major init" {
+        const mat_arr = [4][4]f32{
+            .{ 0.0, 0.1, 0.2, 0.3 },
+            .{ 0.4, 0.5, 0.6, 0.7 },
+            .{ 0.8, 0.9, 1.0, 1.1 },
+            .{ 1.2, 1.3, 1.4, 1.5 },
+        };
+        const result = initColumnMajor(mat_arr);
+        const expected = Matrix4f{ .cols = .{
+            .{ 0.0, 0.1, 0.2, 0.3 },
+            .{ 0.4, 0.5, 0.6, 0.7 },
+            .{ 0.8, 0.9, 1.0, 1.1 },
+            .{ 1.2, 1.3, 1.4, 1.5 },
+        }};
+
+        try expectEqual(expected, result);
     }
 
     /// Returns a scaling matrix with `vec` components on the diagonal.
-    fn scaling(vec: Vec3f) Matrix4f {
+    fn scaling(vec: [3]f32) Matrix4f {
         const x = vec[0];
         const y = vec[1];
         const z = vec[2];
@@ -65,7 +88,7 @@ pub const Matrix4f = extern struct {
     }
 
     /// Returns a translation matrix that moves points by `pos`.
-    fn translation(pos: Vec3f) Matrix4f {
+    fn translation(pos: [3]f32) Matrix4f {
         return Matrix4f.init(.{
             .{ 1, 0, 0, pos[0] },
             .{ 0, 1, 0, pos[1] },
@@ -132,13 +155,13 @@ pub const Matrix4f = extern struct {
 
     /// Post-multiplies `self` by a scaling matrix built from `vec`.
     /// Returns a new matrix: `self * Scaling(vec)`.
-    pub fn scale(self: Matrix4f, vec: Vec3f) Matrix4f {
+    pub fn scale(self: Matrix4f, vec: [3]f32) Matrix4f {
         return self.mul(scaling(vec));
     }
 
     test "scaling" {
         const mat = Matrix4f.identity;
-        const svec = Vec3f{ 2, 3, 4 };
+        const svec = [3]f32{ 2, 3, 4 };
         const result = mat.scale(svec);
         const expected = Matrix4f.init(.{
             .{ 1*2, 0  , 0  , 0 },
@@ -153,13 +176,13 @@ pub const Matrix4f = extern struct {
 
     /// Post-multiplies `self` by a translation matrix built from `pos`.
     /// Returns a new matrix: `self * translation(pos)`.
-    pub fn translate(self: Matrix4f, pos: Vec3f) Matrix4f {
+    pub fn translate(self: Matrix4f, pos: [3]f32) Matrix4f {
         return self.mul(translation(pos));
     }
 
     test "translation" {
         const mat = Matrix4f.identity;
-        const pos = Vec3f{ 2, 3, 4 };
+        const pos = [3]f32{ 2, 3, 4 };
         const result = mat.translate(pos);
         const expected = Matrix4f.init(.{
             .{ 1, 0, 0, 2 },
@@ -174,13 +197,13 @@ pub const Matrix4f = extern struct {
 
     /// Post-multiplies `self` by a rotation matrix around `axis` by `angle_radians`.
     /// Returns a new matrix: `self * rotationAxis(axis, angle)`.
-    pub fn rotate(self: Matrix4f, angle_radians: f32, axis: Vec3f) Matrix4f {
+    pub fn rotate(self: Matrix4f, angle_radians: f32, axis: [3]f32) Matrix4f {
         return self.mul(rotationAxis(axis, angle_radians));
     }
 
     test "any axis rotations" {
         {
-            const axis = Vec3f{ 0.0, 0.0, 1.0 };
+            const axis = [3]f32{ 0.0, 0.0, 1.0 };
             const angle = std.math.pi / 2.0; // 90
             const result = rotationAxis(axis, angle);
             const expected = Matrix4f{ .cols = .{
