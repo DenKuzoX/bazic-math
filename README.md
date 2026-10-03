@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) void {
 Now in your code you may import and use bazic-math:
 ```zig
 const bmath = @import("bazic_math");
-const vec = bmath.Vectors;
-const mat = bmath.Matrices;
-const Matrix4f = bmath.Matrices.Matrix4f;
+const vec = bmath.vector;
+const mat = bmath.matrix;
+const Matrix4f = bmath.matrix.Matrix4f;
 ```
