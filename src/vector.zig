@@ -289,15 +289,13 @@ fn compareVectors(
     b: @TypeOf(a),
     comptime op: std.builtin.ReduceOp
 ) bool {
-    const len = @typeInfo(@TypeOf(a)).vector.len;
-    var result: @Vector(len, bool) = undefined;
-    switch (is) {
-        .Equal => result = a == b,
-        .Greater => result = a > b,
-        .Less => result = a < b,
-        .EqualOrGreater => result = a >= b,
-        .EqualOrLess => result = a <= b,
-    }
+    const result = switch (is) {
+        .Equal => a == b,
+        .Greater => a > b,
+        .Less => a < b,
+        .EqualOrGreater => a >= b,
+        .EqualOrLess => a <= b,
+    };
     return @reduce(op, result);
 }
 
