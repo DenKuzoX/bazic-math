@@ -9,7 +9,7 @@ const Vec3f = Vec.Vector3f;
 /// A 4×4 column-major matrix using `extern` layout.
 /// Stores 4 columns as `Vec4f` vectors. Default is zero-filled.
 pub const Matrix4f = extern struct {
-    cols: [4]Vec4f = [_]Vec4f{ @splat(0) } ** 4,
+    cols: [4]Vec4f = @splat(@splat(0)),
 
     pub const identity: Matrix4f = .{ .cols = .{
         .{ 1, 0, 0, 0 },
@@ -98,7 +98,7 @@ pub const Matrix4f = extern struct {
     }
 
     /// Returns a rotation matrix around an arbitrary normalized axis by `angle_radians`.
-    /// Uses Rodrigues' rotation formula.
+    /// Uses Rodriguez' rotation formula.
     fn rotationAxis(axis: Vec3f, angle_radians: f32) Matrix4f {
         const axs = Vec.normalize(axis);
         const x = axs[0];

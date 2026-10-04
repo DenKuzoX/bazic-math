@@ -9,7 +9,7 @@ const Vec3f = Vec.Vector3f;
 /// A 4×4 column-major matrix using `extern` layout.
 /// Stores 4 columns as `[4][4]f32` array. Default is zero-filled.
 pub const Matrix4f = extern struct {
-    cols: [4][4]f32 = [_][4]f32{ @splat(0) } ** 4,
+    cols: [4][4]f32 = @splat(@splat(0)),
 
     pub const identity: Matrix4f = .{ .cols = .{
         .{ 1, 0, 0, 0 },
